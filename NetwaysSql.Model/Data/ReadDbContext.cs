@@ -20,8 +20,12 @@
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+
+            modelBuilder.ApplyConfiguration(new ProductConfiguration());
         }
         public DbSet<Category> Categories { get; set; }
+
+        public DbSet<Product> Products { get; set; }    
 
         public async Task<int> SaveChangesAsync()
         {
