@@ -1,6 +1,7 @@
 using Netways.Dynamics.Common.Core;
 using Netways.Sql.Core;
 using NetwaysSql.Api;
+using NetwaysSql.Core;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +38,8 @@ builder.Services.AddWriteDbContext(builder.Configuration);
 builder.Services.AddReadDbContext(builder.Configuration);
 
 builder.Services.AddSqlHealthChecks(builder.Configuration.GetConnectionString("DefaultConnection") ?? "");
+
+builder.Services.AddTransient<ICategoryManager, CategoryManager>();
 
 var app = builder.Build();
 

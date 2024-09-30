@@ -4,7 +4,7 @@
     using Netways.Sql.Model;
     using NetwaysSql.Model.EntitiesConfiguration;
 
-    public sealed class ReadDbContext(DbContextOptions<WriteDbContext> options) : DbContext(options), IDbContext,IApplicationDbContext
+    public sealed class ReadDbContext(DbContextOptions<ReadDbContext> options) : DbContext(options), IDbContext,IApplicationDbContext
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
