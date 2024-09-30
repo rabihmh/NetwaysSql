@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NetwaysSql.Model\NetwaysSql.Model.csproj" />
+    <ProjectReference Include="..\NetwaysSql.Core\NetwaysSql.Core.csproj" />
   </ItemGroup>
 
 </Project>
