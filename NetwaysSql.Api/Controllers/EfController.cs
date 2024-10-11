@@ -233,5 +233,19 @@ namespace NetwaysSql.Api.Controllers
             }
             return BadRequest(response);
         }
+
+        [HttpGet]
+        [Route("productswithcategories")]
+        [MapToApiVersion(1)]
+        public async Task<IActionResult> GetProductsWithCategory()
+        {
+            var response = await productManager.GetProductsWithCategory();
+
+            if (response.IsSuccess)
+            {
+                return Ok(response);
+            }
+            return BadRequest(response);
+        }
     }
 }

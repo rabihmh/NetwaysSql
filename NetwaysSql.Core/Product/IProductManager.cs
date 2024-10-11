@@ -22,5 +22,7 @@ namespace NetwaysSql.Core
         Task<DefaultResponse<DefaultPageCollection<ProductDto>>> GetAsPaginated(int pageNumber, int pageSize);
 
         Task<DefaultResponse<DefaultPageCollection<ProductDto>>> GetAsPaginatedOrderByName(int pageNumber, int pageSize);
+
+        Task<DefaultResponse<IEnumerable<ProductWithCategoryDto>>> GetProductsWithCategory();
     }
 }

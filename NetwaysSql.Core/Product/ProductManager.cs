@@ -2,6 +2,7 @@
 using Netways.Dynamics.Common.Model;
 using Netways.Sql.Core;
 using NetwaysSql.Model;
+using System.Collections.Generic;
 
 namespace NetwaysSql.Core
 {
@@ -338,6 +339,49 @@ namespace NetwaysSql.Core
             {
                 return logger.LogErrorAndReturnDefaultResponse<bool>(ex,this,[updateProductDto]);
             }
+
         }
+
+        public async Task<DefaultResponse<IEnumerable<ProductWithCategoryDto>>> GetProductsWithCategory()
+        {
+            try
+            {
+                var result=await readService.FindAll<Product>(x => true, ["Category"]);
+
+                if(result.IsSuccess && result.Result != null)
+                {
+                    var products = result.Result.Select(x => new ProductWithCategoryDto
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        Description = x.Description,
+                        Price = x.Price,
+                        Category= new CategoryDto
+                        {
+                            Id = x.Category.Id,
+                            Name = x.Category.Name,
+                            Description=x.Category.Description
+                        }
+                    });
+
+                    return new DefaultResponse<IEnumerable<ProductWithCategoryDto>>
+                    {
+                        Result = products
+                    };
+                }
+
+                return new DefaultResponse<IEnumerable<ProductWithCategoryDto>>
+                {
+                    IsSuccess = true,
+                    Result = [],
+                    ErrorMessageEn = result.ErrorMessageEn
+                };
+
+            }catch(Exception ex)
+            {
+                return logger.LogErrorAndReturnDefaultResponse<IEnumerable<ProductWithCategoryDto>>(ex, this, []);
+            }
+        }
+
     }
 }
