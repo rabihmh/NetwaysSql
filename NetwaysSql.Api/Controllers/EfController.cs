@@ -179,7 +179,7 @@ namespace NetwaysSql.Api.Controllers
         }
 
         [HttpPut]
-        [Route("categories")]
+        [Route("products")]
         [MapToApiVersion(1)]
         public async Task<IActionResult> UpdateProduct([FromBody]UpdateProductDto updateProductDto)
         {

@@ -41,6 +41,10 @@ builder.Services.AddSqlHealthChecks(builder.Configuration.GetConnectionString("D
 
 builder.Services.AddTransient<ICategoryManager, CategoryManager>();
 
+builder.Services.AddTransient<IProductManager, ProductManager>();
+
+
+
 var app = builder.Build();
 
 if (!app.Environment.IsProduction())
