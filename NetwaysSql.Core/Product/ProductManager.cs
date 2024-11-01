@@ -2,7 +2,6 @@
 using Netways.Dynamics.Common.Model;
 using Netways.Sql.Core;
 using NetwaysSql.Model;
-using System.Collections.Generic;
 
 namespace NetwaysSql.Core
 {
@@ -27,18 +26,10 @@ namespace NetwaysSql.Core
 
                 if(result.IsSuccess)
                 {
-                    return new DefaultResponse<bool>
-                    {
-                        Result = true
-                    };
+                    return true;
                 }
 
-                return new DefaultResponse<bool>
-                {
-                    IsSuccess = false,
-                    Result = false,
-                    ErrorMessageEn = result.ErrorMessageEn
-                }; 
+                return result.ErrorMessageEn;
 
             }catch (Exception ex)
             {
@@ -65,22 +56,15 @@ namespace NetwaysSql.Core
 
                 if(result.IsSuccess)
                 {
-                    return new DefaultResponse<int>
-                    {
-                        Result = result.Result
-                    };
+                    return DefaultResponse<int>.Success(result.Result);
                 }
 
-                return new DefaultResponse<int>
-                {
-                    IsSuccess = false,
-                    Result = 0,
-                    ErrorMessageEn = result.ErrorMessageEn
-                };
+                return (result.ErrorMessageEn,(int)ErrorCodes.ValidationFailed);
 
              }catch(Exception ex)
              {
-                    return logger.LogErrorAndReturnDefaultResponse<int>(ex, this, [addProductDtos]);
+                    logger.LogError(ex, this, [addProductDtos]);
+                    return ex;
              }
         }
 

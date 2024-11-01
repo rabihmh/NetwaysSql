@@ -143,11 +143,7 @@ namespace NetwaysSql.Api.Controllers
         {
             var response = await productManager.AddProduct(addProductDto);
 
-            if (response.IsSuccess)
-            {
-                return Ok(response);
-            }
-            return BadRequest(response);
+            return response.ToApiResponse();
         }
 
         [HttpGet]

@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Netways.Dynamics.Common.Core" Version="2.0.32" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\NetwaysSql.Model\NetwaysSql.Model.csproj" />
   </ItemGroup>
 
