@@ -43,7 +43,7 @@ builder.Services.AddTransient<ICategoryManager, CategoryManager>();
 
 builder.Services.AddTransient<IProductManager, ProductManager>();
 
-
+builder.Services.AddDapperServices("Server=RABIHMH-NET;Database=NetwaysSql;Integrated Security=True;TrustServerCertificate=true");
 
 var app = builder.Build();
 

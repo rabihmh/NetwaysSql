@@ -1,11 +1,14 @@
-﻿using Netways.Dynamics.Common.Core;
+﻿using Dapper;
+using Microsoft.AspNetCore.Mvc;
+using Netways.Dynamics.Common.Core;
 using Netways.Dynamics.Common.Model;
 using Netways.Sql.Core;
 using NetwaysSql.Model;
+using System.Data;
 
 namespace NetwaysSql.Core
 {
-    public class ProductManager(ILogger logger, ISqlService<ReadDbContext> readService,ISqlService<WriteDbContext> writeService) : IProductManager
+    public class ProductManager(ILogger logger, ISqlService<ReadDbContext> readService,ISqlService<WriteDbContext> writeService,IDapperService dapperService) : IProductManager
     {
         public async Task<DefaultResponse<bool>> AddProduct(AddProductDto addProductDto)
         {
@@ -29,9 +32,10 @@ namespace NetwaysSql.Core
                     return true;
                 }
 
-                return result.ErrorMessageEn;
+                return DefaultResponseBuilder<bool>.Failure(result.ErrorMessageEn, result.Code, result.IsSystemError).Build();                   
 
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return logger.LogErrorAndReturnDefaultResponse<bool>(ex, this, [addProductDto]);
             }
@@ -367,5 +371,233 @@ namespace NetwaysSql.Core
             }
         }
 
+        public async Task<DefaultResponse<IEnumerable<ProductDto>>> SearchProducts(string keyword)
+        {
+            try
+            {
+                var products = await readService.FindAll<Product, ProductDto>(
+                    p => p.Name.Contains(keyword) || p.Description.Contains(keyword),
+                    p => new ProductDto
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Description = p.Description,
+                        Price = p.Price,
+                        CategoryId = p.CategoryId
+                    });
+
+                return products.IsSuccess && products.Result != null
+                    ? DefaultResponse<IEnumerable<ProductDto>>.Success(products?.Result)
+                    : DefaultResponse<IEnumerable<ProductDto>>.Failure(products.ErrorMessageEn,products.Code, products.IsSystemError);
+
+            }
+            catch (Exception ex)
+            {
+                return logger.LogErrorAndReturnDefaultResponse<IEnumerable<ProductDto>>(ex, this, [keyword]);
+            }
+        }
+
+        public async Task<DefaultResponse<IEnumerable<ProductDto>>> GetProductsByCategory(Guid categoryId)
+        {
+            var result = await readService.FindAll<Product, ProductDto>(
+                x => x.CategoryId == categoryId,
+                x => new ProductDto { Id = x.Id, Name = x.Name, Price = x.Price, CategoryId = x.CategoryId }
+            );
+
+            return result.IsSuccess 
+                ? new DefaultResponse<IEnumerable<ProductDto>> { Result = result.Result } 
+                : new DefaultResponse<IEnumerable<ProductDto>> { ErrorMessageEn = result.ErrorMessageEn };
+        }
+
+        public async Task<DefaultResponse<bool>> UpdateProductCategory(Guid productId, Guid newCategoryId)
+        {
+            var productResult = await readService.GetEntityById<Product>(productId);
+            if (!productResult.IsSuccess || productResult.Result == null)
+                return new DefaultResponse<bool> { IsSuccess = false, ErrorMessageEn = "Product not found" };
+
+            productResult.Result.CategoryId = newCategoryId;
+            var updateResult = await writeService.UpdateEntity(productResult.Result, productId);
+
+            return updateResult.IsSuccess 
+                ? new DefaultResponse<bool> { Result = true } 
+                : new DefaultResponse<bool> { IsSuccess = false, ErrorMessageEn = updateResult.ErrorMessageEn };
+        }
+
+        public async Task<DefaultResponse<IEnumerable<ProductDto>>> FilterProductsByPriceRange(decimal minPrice, decimal maxPrice)
+        {
+            var result = await readService.FindAll<Product, ProductDto>(
+                x => x.Price >= minPrice && x.Price <= maxPrice,
+                x => new ProductDto { Id = x.Id, Name = x.Name, Price = x.Price, CategoryId = x.CategoryId }
+            );
+
+            return result.IsSuccess 
+                ? new DefaultResponse<IEnumerable<ProductDto>> { Result = result.Result } 
+                : new DefaultResponse<IEnumerable<ProductDto>> { IsSuccess = false, ErrorMessageEn = result.ErrorMessageEn };
+        }
+
+        public async Task<DefaultResponse<bool>> AddTagToProductAsync(Guid productId, Guid tagId)
+        {
+            try
+            {
+                var product = await readService.GetEntityById<Product>(productId);
+                if (!product.IsSuccess || product.Result == null)
+                    return new DefaultResponse<bool> { IsSuccess = false, ErrorMessageEn = "Product not found" };
+
+                var tag = await readService.GetEntityById<Tag>(tagId);
+                if (!tag.IsSuccess || tag.Result == null)
+                    return new DefaultResponse<bool> { IsSuccess = false, ErrorMessageEn = "Tag not found" };
+
+                // Check if the association already exists
+                var productTagExists = await readService.FindAll<ProductTag>(pt => pt.ProductId == productId && pt.TagId == tagId);
+
+                 if (productTagExists.Result != null && productTagExists.Result.Any())
+                    throw new Exception("Product already has this tag.");
+
+                // Add the association to the pivot table
+                var productTag = new ProductTag
+                {
+                    ProductId = productId,
+                    TagId = tagId
+                };
+
+                var addResult = await writeService.AddEntity(productTag);
+
+                return addResult.IsSuccess
+                ? new DefaultResponse<bool> { Result = true, IsSuccess = true }
+                : new DefaultResponse<bool> { IsSuccess = false, ErrorMessageEn = addResult.ErrorMessageEn };
+            }
+            catch(Exception ex)
+            {
+                return logger.LogErrorAndReturnDefaultResponse<bool>(ex, this, [productId, tagId]); 
+            }
+        }
+
+        public async Task<DefaultResponse<bool>> RemoveTagFromProductAsync(Guid productId, Guid tagId)
+        {
+            try
+            {
+                var productTag = await readService.FindAll<ProductTag>(pt=>pt.ProductId == productId &&  pt.TagId== tagId);
+
+                if(!productTag.IsSuccess || productTag.Result==null)
+                    return DefaultResponseBuilder<bool>.New().WithMappedResult(productTag).Build();
+
+                var parameters = new DynamicParameters();
+
+                parameters.Add("@ProductId", productId);
+
+                parameters.Add("@TagId", tagId);
+
+                var deleteResult = await dapperService.Delete("DELETE FROM ProductTags WHERE ProductId = @ProductId And TagId = @TagId",parameters);
+
+                if(deleteResult.IsSuccess)
+                    return true;
+
+                return DefaultResponseBuilder<bool>.New().WithMappedResult(deleteResult).Build();
+
+            }catch(Exception ex)
+            {
+                return logger.LogErrorAndReturnDefaultResponse<bool>(ex, this, [productId,tagId]);
+            }
+        }
+
+        public async Task<DefaultResponse<FullProductDto>> GetProductWithTagsAsync(Guid productId)
+        {
+            try
+            {
+                var result = await readService.FindAll<Product>(x => x.Id == productId, new[] { "ProductTags.Tag", "Category" });
+
+                if (!result.IsSuccess || result.Result == null || !result.Result.Any())
+                    return new DefaultResponse<FullProductDto> { IsSuccess = false, ErrorMessageEn = "Product not found" };
+
+                var product = result.Result.Select(x => new FullProductDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Description = x.Description,
+                    Price = x.Price,
+                    Category = x.Category != null ? new CategoryDto
+                    {
+                        Id = x.Category.Id,
+                        Name = x.Category.Name,
+                        Description = x.Category.Description
+                    } : null,
+                    Tags = x.ProductTags?.Select(pt => new TagDto
+                    {
+                        Id = pt.Tag.Id,
+                        Name = pt.Tag.Name
+                    }).ToList()
+                }).FirstOrDefault();
+
+                return new DefaultResponse<FullProductDto> { Result = product, IsSuccess = product != null };
+            }
+            catch (Exception ex)
+            {
+                return logger.LogErrorAndReturnDefaultResponse<FullProductDto>(ex, this, new object[] { productId });
+            }
+        }
+
+        public async Task<DefaultResponse<FullProductDto>> GetProductWithTagsDapper(Guid productId)
+        {
+            try
+            {
+                const string query = @"
+                SELECT 
+                    p.Id, p.Name, p.Description, p.Price, p.CategoryId,
+                    c.Id AS CategoryId, c.Name AS CategoryName, c.Description AS CategoryDescription,
+                    t.Id AS TagId, t.Name AS TagName
+                FROM Products p
+                LEFT JOIN Categories c ON p.CategoryId = c.Id
+                LEFT JOIN ProductTags pt ON p.Id = pt.ProductId
+                LEFT JOIN Tags t ON pt.TagId = t.Id
+                WHERE p.Id = @ProductId";
+
+                var parameters = new DynamicParameters();
+                parameters.Add("ProductId", productId);
+
+                var result = await dapperService.GetRelatedEntities<Product, Category, Tag>(
+                    query,
+                    (product, category, tag) =>
+                    {
+                        product.Category = category;
+                        if (tag != null)
+                        {
+                            product.ProductTags ??= new List<ProductTag>();
+                            product.ProductTags.Add(new ProductTag { Tag = tag });
+                        }
+                        return product;
+                    },
+                    parameters,
+                    splitOn: "CategoryId,TagId",
+                    commandType: CommandType.Text);
+
+                if (!result.IsSuccess || result.Result == null)
+                    return DefaultResponseBuilder<FullProductDto>.New().WithMappedResult(result).Build();
+
+                var product = result.Result.Select(x => new FullProductDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Description = x.Description,
+                    Price = x.Price,
+                    Category = x.Category != null ? new CategoryDto
+                    {
+                        Id = x.Category.Id,
+                        Name = x.Category.Name,
+                        Description = x.Category.Description
+                    } : null,
+                    Tags = x.ProductTags?.Select(pt => new TagDto
+                    {
+                        Id = pt.Tag.Id,
+                        Name = pt.Tag.Name
+                    }).ToList()
+                }).FirstOrDefault();
+
+                return product;
+            }
+            catch (Exception ex)
+            {
+                return logger.LogErrorAndReturnDefaultResponse<FullProductDto>(ex, this, new object[] { productId });
+            }
+        }
     }
 }

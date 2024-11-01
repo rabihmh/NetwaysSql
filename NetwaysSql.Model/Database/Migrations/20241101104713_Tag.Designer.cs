@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetwaysSql.Model;
 
 #nullable disable
 
-namespace NetwaysSql.Model.Migrations
+namespace NetwaysSql.Model.Database.Migrations
 {
     [DbContext(typeof(WriteDbContext))]
-    partial class WriteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241101104713_Tag")]
+    partial class Tag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -107,48 +110,6 @@ namespace NetwaysSql.Model.Migrations
                         .IsUnique();
 
                     b.ToTable("Tags");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("c8011bc5-f5ef-496e-a4b5-3310701e913f"),
-                            Name = "Electronics"
-                        },
-                        new
-                        {
-                            Id = new Guid("13711902-594b-4174-b2f2-90ce83f9230b"),
-                            Name = "Home Appliances"
-                        },
-                        new
-                        {
-                            Id = new Guid("f847b4bf-3e60-408d-a494-93c118501e7c"),
-                            Name = "Fashion"
-                        },
-                        new
-                        {
-                            Id = new Guid("db1c84a4-003f-4b6f-af67-ae2dcde31568"),
-                            Name = "Toys"
-                        },
-                        new
-                        {
-                            Id = new Guid("ae3f7f4f-c8d4-4cb5-ad8c-976f0df5828c"),
-                            Name = "Books"
-                        },
-                        new
-                        {
-                            Id = new Guid("250c8a57-a911-40ff-9cf8-77ec4a39e191"),
-                            Name = "For Kids"
-                        },
-                        new
-                        {
-                            Id = new Guid("f6ac494a-0a3d-473b-b22b-875a9680a092"),
-                            Name = "Sport"
-                        },
-                        new
-                        {
-                            Id = new Guid("f0b308a1-07ff-40fc-96db-5be6e2e4047b"),
-                            Name = "Health"
-                        });
                 });
 
             modelBuilder.Entity("NetwaysSql.Model.Product", b =>

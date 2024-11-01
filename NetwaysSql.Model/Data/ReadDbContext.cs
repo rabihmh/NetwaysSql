@@ -22,10 +22,18 @@
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
 
             modelBuilder.ApplyConfiguration(new ProductConfiguration());
+
+            modelBuilder.ApplyConfiguration(new TagConfiguration());
+
+            modelBuilder.ApplyConfiguration(new ProductTagConfiguration());
         }
         public DbSet<Category> Categories { get; set; }
 
-        public DbSet<Product> Products { get; set; }    
+        public DbSet<Product> Products { get; set; }
+
+        public DbSet<Tag> Tags { get; set; }
+
+        public DbSet<ProductTag> ProductTags { get; set; }
 
         public async Task<int> SaveChangesAsync()
         {

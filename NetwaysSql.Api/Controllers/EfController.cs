@@ -209,11 +209,8 @@ namespace NetwaysSql.Api.Controllers
         {
             var response = await productManager.GetAsPaginatedOrderByName(pageNumber, pageSize);
 
-            if (response.IsSuccess)
-            {
-                return Ok(response);
-            }
-            return BadRequest(response);
+            return response.ToApiResponse();
+
         }
 
         [HttpPost]
@@ -223,11 +220,8 @@ namespace NetwaysSql.Api.Controllers
         {
             var response = await productManager.AddRangeProduct(addProductDto);
 
-            if (response.IsSuccess)
-            {
-                return Ok(response);
-            }
-            return BadRequest(response);
+            return response.ToApiResponse();
+
         }
 
         [HttpGet]
@@ -237,11 +231,91 @@ namespace NetwaysSql.Api.Controllers
         {
             var response = await productManager.GetProductsWithCategory();
 
-            if (response.IsSuccess)
-            {
-                return Ok(response);
-            }
-            return BadRequest(response);
+            return response.ToApiResponse();
+
+        }
+
+        [HttpGet]
+        [Route("products/search/{keyword}")]
+        [MapToApiVersion(1)]
+        public async Task<IActionResult> SearchProducts(string keyword)
+        {
+            var response = await productManager.SearchProducts(keyword);
+
+            return response.ToApiResponse();
+
+        }
+
+        [HttpGet]
+        [Route("products/category/{categoryId}")]
+        [MapToApiVersion(1)]
+        public async Task<IActionResult> GetProductsByCategory(Guid categoryId)
+        {
+            var response = await productManager.GetProductsByCategory(categoryId);
+
+            return response.ToApiResponse();
+
+        }
+
+        [HttpPut]
+        [Route("products/updatecategory")]
+        [MapToApiVersion(1)]
+        public async Task<IActionResult> UpdateProductCategory(Guid productId, Guid newCategoryId)
+        {
+            var response = await productManager.UpdateProductCategory(productId, newCategoryId);
+
+            return response.ToApiResponse();
+
+        }
+
+        [HttpGet]
+        [Route("products/filter/{minPrice}/{maxPrice}")]
+        [MapToApiVersion(1)]
+        public async Task<IActionResult> FilterProductsByPriceRange(decimal minPrice, decimal maxPrice)
+        {
+            var response = await productManager.FilterProductsByPriceRange(minPrice, maxPrice);
+
+            return response.ToApiResponse();
+        }
+
+        [HttpPost]
+        [Route("products/addtag")]
+        [MapToApiVersion(1)]
+        public async Task<IActionResult> AddTagToProductAsync(Guid productId, Guid tagId)
+        {
+            var response = await productManager.AddTagToProductAsync(productId, tagId);
+
+            return response.ToApiResponse();
+        }
+
+        [HttpDelete]
+        [Route("products/removetag")]
+        [MapToApiVersion(1)]
+        public async Task<IActionResult> RemoveTagFromProductAsync(Guid productId, Guid tagId)
+        {
+            var response = await productManager.RemoveTagFromProductAsync(productId, tagId);
+
+            return response.ToApiResponse();
+        }
+
+        [HttpGet]
+        [Route("products/tags/{productId}")]
+        [MapToApiVersion(1)]
+        public async Task<IActionResult> GetProductWithTagsAsync(Guid productId)
+        {
+            var response = await productManager.GetProductWithTagsAsync(productId);
+
+            return response.ToApiResponse();
+        }
+
+        [HttpGet]
+        [Route("products/dapper/tags/{productId}")]
+        [MapToApiVersion(1)]
+        public async Task<IActionResult> GetProductWithTagsDapperAsync(Guid productId)
+        {
+            var response = await productManager.GetProductWithTagsDapper(productId);
+
+            return response.ToApiResponse();
         }
     }
 }

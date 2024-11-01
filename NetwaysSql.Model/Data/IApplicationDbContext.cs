@@ -8,5 +8,9 @@ namespace NetwaysSql.Model
         DbSet<Category> Categories { get; }
 
         DbSet<Product> Products { get; }
+
+        DbSet<Tag> Tags { get; }
+
+        DbSet<ProductTag> ProductTags { get; }
     }
 }

@@ -24,5 +24,24 @@ namespace NetwaysSql.Core
         Task<DefaultResponse<DefaultPageCollection<ProductDto>>> GetAsPaginatedOrderByName(int pageNumber, int pageSize);
 
         Task<DefaultResponse<IEnumerable<ProductWithCategoryDto>>> GetProductsWithCategory();
+
+        Task<DefaultResponse<IEnumerable<ProductDto>>> SearchProducts(string keyword);
+
+        Task<DefaultResponse<IEnumerable<ProductDto>>> GetProductsByCategory(Guid categoryId);
+
+        Task<DefaultResponse<bool>> UpdateProductCategory(Guid productId, Guid newCategoryId);
+
+        Task<DefaultResponse<IEnumerable<ProductDto>>> FilterProductsByPriceRange(decimal minPrice, decimal maxPrice);
+
+        Task<DefaultResponse<bool>> AddTagToProductAsync(Guid productId, Guid tagId);
+
+        Task<DefaultResponse<bool>> RemoveTagFromProductAsync(Guid productId, Guid tagId);
+
+        Task<DefaultResponse<FullProductDto>> GetProductWithTagsAsync(Guid productId);
+
+        Task<DefaultResponse<FullProductDto>> GetProductWithTagsDapper(Guid productId);
+
+
+
     }
 }
